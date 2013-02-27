@@ -24,6 +24,7 @@
 //  THE SOFTWARE.
 
 #import "FHSTwitterEngine.h"
+#import "ASIHTTPRequest.h"
 
 #import "OAuthConsumer.h"
 #import <QuartzCore/QuartzCore.h>
@@ -415,8 +416,40 @@ id removeNull(id rootObject) {
     return [self sendGETRequest:request withParameters:params];
 }
 
+- (NSError *)postTweet:(NSString *)tweetString {
+    return [self postTweet:tweetString inReplyTo:nil];
+}
+
+- (NSError *)postTweet:(NSString *)tweetString inReplyTo:(NSString *)inReplyToString {
+    
+    if (tweetString.length == 0) {
+        return [NSError errorWithDomain:@"Bad Request: The request you are trying to make is missing parameters." code:400 userInfo:nil];
+    }
+    
+    tweetString = [tweetString trimForTwitter];
+    
+    NSURL *baseURL = [NSURL URLWithString:@"https://api.twitter.com/1.1/statuses/update.json"];
+    
+    OARequestParameter *status = [OARequestParameter requestParameterWithName:@"status" value:tweetString];
+    OARequestParameter *inReplyToID = [OARequestParameter requestParameterWithName:@"in_reply_to_status_id" value:inReplyToString];
+    
+    OAMutableURLRequest *request = [[OAMutableURLRequest alloc]initWithURL:baseURL consumer:self.consumer token:self.accessToken realm:nil signatureProvider:nil];
+    
+    NSMutableArray *params = [NSMutableArray array];
+    
+    [params addObject:status];
+    
+    if (inReplyToString.length > 0) {
+        [params addObject:inReplyToID];
+    }
+    
+    // PARAMETERS WERE MALFORMED due to setting the params before the HTTP method... lulz
+    
+    return [self sendPOSTRequest:request withParameters:params];
+}
+
 - (NSError *)postTweet:(NSString *)tweetString withImageData:(NSData *)theData {
-    return [self postTweet:tweetString withImageData:theData inReplyTo:@""];
+    return [self postTweet:tweetString withImageData:theData inReplyTo:nil];
 }
 
 - (NSError *)postTweet:(NSString *)tweetString withImageData:(NSData *)theData inReplyTo:(NSString *)irt {
@@ -429,22 +462,19 @@ id removeNull(id rootObject) {
         return [NSError errorWithDomain:@"Bad Request: The request you are trying to make is missing parameters." code:400 userInfo:nil];
     }
     
-    if (irt.length == 0) {
-        return [NSError errorWithDomain:@"Bad Request: The request you are trying to make is missing parameters." code:400 userInfo:nil];
-    }
-    
     NSURL *baseURL = [NSURL URLWithString:@"https://api.twitter.com/1.1/statuses/update_with_media.json"];
     OAMutableURLRequest *request = [[OAMutableURLRequest alloc]initWithURL:baseURL consumer:self.consumer token:self.accessToken realm:nil signatureProvider:nil];
     
     NSMutableArray *params = [[NSMutableArray alloc]init];
-    OARequestParameter *statusP = [OARequestParameter requestParameterWithName:@"status" value:tweetString];
-    OARequestParameter *mediaP = [OARequestParameter requestParameterWithName:@"media[]" value:[theData base64EncodingWithLineLength:0]];
-    OARequestParameter *inReplyToP = [OARequestParameter requestParameterWithName:@"in_reply_to_status_id" value:irt];
     
-    [params addObject:statusP];
+    OARequestParameter *mediaP = [OARequestParameter requestParameterWithName:@"media_data[]" value:[ASIHTTPRequest base64forData:theData]];
     [params addObject:mediaP];
     
+    OARequestParameter *statusP = [OARequestParameter requestParameterWithName:@"status" value:tweetString];
+    [params addObject:statusP];
+    
     if (irt.length > 0) {
+        OARequestParameter *inReplyToP = [OARequestParameter requestParameterWithName:@"in_reply_to_status_id" value:irt];
         [params addObject:inReplyToP];
     }
     
@@ -1550,38 +1580,6 @@ id removeNull(id rootObject) {
     }
     
     return [usernames sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
-}
-
-- (NSError *)postTweet:(NSString *)tweetString inReplyTo:(NSString *)inReplyToString {
-
-    if (tweetString.length == 0) {
-        return [NSError errorWithDomain:@"Bad Request: The request you are trying to make is missing parameters." code:400 userInfo:nil];
-    }
-    
-    tweetString = [tweetString trimForTwitter];
-    
-    NSURL *baseURL = [NSURL URLWithString:@"https://api.twitter.com/1.1/statuses/update.json"];
-    
-    OARequestParameter *status = [OARequestParameter requestParameterWithName:@"status" value:tweetString];
-    OARequestParameter *inReplyToID = [OARequestParameter requestParameterWithName:@"in_reply_to_status_id" value:inReplyToString];
-    
-    OAMutableURLRequest *request = [[OAMutableURLRequest alloc]initWithURL:baseURL consumer:self.consumer token:self.accessToken realm:nil signatureProvider:nil];
-    
-    NSMutableArray *params = [NSMutableArray array];
-    
-    [params addObject:status];
-    
-    if (inReplyToString.length > 0) {
-        [params addObject:inReplyToID];
-    }
-    
-    // PARAMETERS WERE MALFORMED due to setting the params before the HTTP method... lulz
-    
-    return [self sendPOSTRequest:request withParameters:params];
-}
-
-- (NSError *)postTweet:(NSString *)tweetString {
-    return [self postTweet:tweetString inReplyTo:nil];
 }
 
 
