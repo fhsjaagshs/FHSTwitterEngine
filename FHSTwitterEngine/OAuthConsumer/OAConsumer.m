@@ -37,8 +37,8 @@
 }
 
 - (void)dealloc {
-	[self.key release];
-	[self.secret release];
+	self.key = nil;
+	self.secret = nil;
 	[super dealloc];
 }
 

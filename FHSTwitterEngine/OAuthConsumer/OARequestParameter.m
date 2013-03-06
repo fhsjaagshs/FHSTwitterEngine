@@ -43,8 +43,8 @@
 }
 
 - (void)dealloc {
-	[self.name release];
-	[self.value release];
+	self.name = nil;
+	self.value = nil;
 	[super dealloc];
 }
 
