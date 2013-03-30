@@ -321,7 +321,8 @@ id removeNull(id rootObject);
 
 // OAuth login
 - (UIViewController *)OAuthLoginWindow; // You want to use it with something other than presentModalViewController:animated:
-- (void)showOAuthLoginControllerFromViewController:(UIViewController *)sender; // just one less line of code
+- (void)showOAuthLoginControllerFromViewController:(UIViewController *)sender;
+- (void)showOAuthLoginControllerFromViewController:(UIViewController *)sender withCompletion:(void(^)(BOOL success))completionBlock;
 
 // Access Token Mangement
 - (void)clearAccessToken;

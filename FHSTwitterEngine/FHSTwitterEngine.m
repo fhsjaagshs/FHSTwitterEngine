@@ -24,6 +24,7 @@
 //  THE SOFTWARE.
 
 #import "FHSTwitterEngine.h"
+#import "ASIHTTPRequest.h"
 
 #import "OAuthConsumer.h"
 #import <QuartzCore/QuartzCore.h>
@@ -75,6 +76,7 @@ id removeNull(id rootObject) {
 @property (strong, nonatomic) FHSTwitterEngine *engine;
 @property (strong, nonatomic) UIWebView *theWebView;
 @property (strong, nonatomic) OAToken *requestToken;
+@property (strong, nonatomic) void(^completionBlock)(BOOL success);
 
 - (id)initWithEngine:(FHSTwitterEngine *)theEngine;
 - (NSString *)locatePin;
@@ -1612,7 +1614,7 @@ id removeNull(id rootObject) {
 }
 
 - (NSError *)postTweet:(NSString *)tweetString inReplyTo:(NSString *)inReplyToString {
-
+    
     if (tweetString.length == 0) {
         return [NSError errorWithDomain:@"Bad Request: The request you are trying to make is missing parameters." code:400 userInfo:nil];
     }
@@ -2054,7 +2056,7 @@ id removeNull(id rootObject) {
     }
     
     if (errorCode == 403) {
-        return @"Check what you are posting. Twitter doesn't accept duplicate posts.";
+        return @"Update limit hit, check what you are posting. Twitter doesn't accept duplicate posts.";
     }
     
     if (errorCode == 404 || errorCode == 34) {
@@ -2113,7 +2115,14 @@ id removeNull(id rootObject) {
 }
 
 - (void)showOAuthLoginControllerFromViewController:(UIViewController *)sender {
-    [sender presentModalViewController:[self OAuthLoginWindow] animated:YES];
+    [self showOAuthLoginControllerFromViewController:sender withCompletion:nil];
+}
+
+- (void)showOAuthLoginControllerFromViewController:(UIViewController *)sender withCompletion:(void(^)(BOOL success))completionBlock {
+    FHSTwitterEngineController *vc = [[FHSTwitterEngineController alloc]initWithEngine:self];
+    vc.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
+    vc.completionBlock = completionBlock;
+    [sender presentModalViewController:vc animated:YES];
 }
 
 - (UIViewController *)OAuthLoginWindow {
@@ -2243,7 +2252,13 @@ id removeNull(id rootObject) {
 
 - (void)gotPin:(NSString *)pin {
     [self.requestToken setVerifier:pin];
-    [self.engine finishAuthWithPin:pin andRequestToken:self.requestToken];
+    int ret = [self.engine finishAuthWithPin:pin andRequestToken:self.requestToken];
+    
+    if (self.completionBlock) {
+        // make sure that a completion block has been set.
+        self.completionBlock(!ret);
+    }
+    
     [self dismissModalViewControllerAnimated:YES];
 }
 
