@@ -1986,11 +1986,14 @@ static NSString * const oldPinJS = @"var d = document.getElementById('oauth-pin'
     BOOL ret = [[FHSTwitterEngine sharedEngine]finishAuthWithRequestToken:_requestToken];
     
     void(^block)(BOOL success) = objc_getAssociatedObject(authBlockKey, "FHSTwitterEngineOAuthCompletion");
-    objc_removeAssociatedObjects(authBlockKey);
+    //    objc_removeAssociatedObjects(authBlockKey);
     
     if (block) {
         block(ret);
     }
+    
+    //use objc_setAssociatedObject to clear the block, and this method can be invoked only after the block finished
+    objc_setAssociatedObject(authBlockKey, "FHSTwitterEngineOAuthCompletion", nil, OBJC_ASSOCIATION_COPY_NONATOMIC);
     
     [self dismissViewControllerAnimated:YES completion:nil];
 }
