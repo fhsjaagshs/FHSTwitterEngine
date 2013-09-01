@@ -33,9 +33,9 @@
 
 @interface OAMutableURLRequest : NSMutableURLRequest
 
-@property (nonatomic, assign) NSString *signature;
-@property (nonatomic, assign) NSString *nonce;
-@property (nonatomic, assign) NSString *timestamp;
+@property (nonatomic, copy) NSString *signature;
+@property (nonatomic, copy) NSString *nonce;
+@property (nonatomic, copy) NSString *timestamp;
 
 + (void)fetchDataForRequest:(OAMutableURLRequest *)request withCompletionHandler:(void(^)(OAServiceTicket *, NSData *, NSError *))block;
 
